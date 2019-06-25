@@ -25,7 +25,6 @@ zhfont = matplotlib.font_manager.FontProperties(fname='./fonts/msyh.ttf')
 get_str=''
 stock_code=''
 data_path='./data/'
-radiotuple=[]
 fig, ax = plt.subplots()
 
 
@@ -39,6 +38,7 @@ def get_stock_name(stock_code):
 		print('get stock details failed')
 		return
 	str1=str1.split(',')[0]
+	print ('get stock name:'+str1)
 	return str1
 	
 def get_stock_data(stock_code,scale=240,datalen=30,mode='w',header=True):
@@ -63,7 +63,9 @@ def get_stock_data(stock_code,scale=240,datalen=30,mode='w',header=True):
 			else:
 				dic[t[0]]=[t[1].replace('"','')]
 	df = pd.DataFrame(dic)
+	#print (df)
 	df.to_csv(data_path+'{}.csv'.format(stock_code),mode=mode,index=False,header=header)
+	print ('write data to file')
 	return True
 
 def write_buy_sell_to_file(string):
@@ -92,7 +94,7 @@ def write_buy_sell_to_file(string):
 	else:
 		df.to_csv(data_path+'{}-bs.csv'.format(stock_code),mode='w',index=False)
 
-def get_data_and_display(stock_code):
+def get_data_and_display(stock_code,startdate=(datetime.date.today()-datetime.timedelta(1)).strftime('%Y-%m-%d'),datalen=60):
 	global ax
 	if stock_code=='':
 		return
@@ -116,6 +118,17 @@ def get_data_and_display(stock_code):
 	if os.path.exists(data_path+'{}.csv'.format(stock_code)):
 		print ('get csv data')
 		quotes = pd.read_csv(data_path+'{}.csv'.format(stock_code),index_col=0,parse_dates=True,infer_datetime_format=True)
+		cutlen=len(quotes)
+		print('{} {}'.format(quotes.last_valid_index(),startdate))
+		quotes = quotes[quotes.index <= startdate]
+		cutlen-=len(quotes)
+		if (quotes.last_valid_index().strftime('%Y-%m-%d')<startdate or len(quotes)<datalen):
+			get_stock_data(stock_code,datalen=datalen+cutlen)
+			quotes = pd.read_csv(data_path+'{}.csv'.format(stock_code),index_col=0,parse_dates=True,infer_datetime_format=True)
+			quotes = quotes[quotes.index <= startdate]
+		#print (quotes.at_time('2019-06-20'))
+		quotes = quotes.tail(datalen)
+		print(quotes)
 		ax.plot(mdates.date2num(quotes.index.to_pydatetime()),quotes['ma_price5'],'k-')
 		ax.plot(mdates.date2num(quotes.index.to_pydatetime()),quotes['ma_price10'],'m-')
 		ax.plot(mdates.date2num(quotes.index.to_pydatetime()),quotes['ma_price30'],'b-')
@@ -129,11 +142,22 @@ def get_data_and_display(stock_code):
 #button
 def bdspl_handle(event):
 	global stock_code
-	if get_str[0:2]=='sh' or get_str[0:2]=='sz':
-		stock_code=get_str
-		get_data_and_display(stock_code)
-	else:
-		print ('input error')
+	lens=60
+	date1=(datetime.date.today()-datetime.timedelta(1)).strftime('%Y-%m-%d')
+	str1=re.split(',| ',get_str)
+	for stri in str1:
+		if stri[0:2]=='sh' or stri[0:2]=='sz':
+			stock_code=stri
+			get_data_and_display(stock_code)
+		elif stri[0:3]=='len':			
+			lens=int(stri[3:])
+		elif stri[0:4]=='date':
+			date1=stri[4:]
+		else:
+			print ('input error')
+			return
+	get_data_and_display(stock_code,date1,lens)
+			
 
 def b_s_handle(event):
 	print ('buy-sell')
