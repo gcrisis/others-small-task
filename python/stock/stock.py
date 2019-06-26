@@ -109,8 +109,8 @@ def get_data_and_display(stock_code,startdate=(datetime.date.today()-datetime.ti
 	ax.xaxis.set_major_locator(mondays)
 	ax.xaxis.set_minor_locator(alldays)
 	ax.xaxis.set_major_formatter(weekFormatter)
-	ax.xaxis_date()
 	ax.autoscale_view()
+	plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
 	if os.path.exists(data_path+'{}-bs.csv'.format(stock_code)):
 		bs = pd.read_csv(data_path+'{}-bs.csv'.format(stock_code),index_col=0,parse_dates=True,infer_datetime_format=True)
 		ax.plot(mdates.date2num(bs.index.to_pydatetime()),bs['buy'],'mo')
@@ -182,15 +182,15 @@ if __name__=='__main__':
 	f.close()
 
 		
-	axdspl = plt.axes([0.81, 0.05, 0.1, 0.075])
+	axdspl = plt.axes([0.81, 0, 0.1, 0.075])
 	bdspl = Button(axdspl, 'stock')
 	bdspl.on_clicked(bdspl_handle)
 	
-	axb_s = plt.axes([0.7, 0.05, 0.1, 0.075])
+	axb_s = plt.axes([0.7, 0, 0.1, 0.075])
 	bb_s = Button(axb_s, 'buy-sell')
 	bb_s.on_clicked(b_s_handle)
 		
-	axbox = plt.axes([0.1, 0.05, 0.2, 0.075])
+	axbox = plt.axes([0.1, 0, 0.2, 0.075])
 	text_box = TextBox(axbox, 'input', initial='')
 	text_box.on_submit(submit)
 	
@@ -198,6 +198,8 @@ if __name__=='__main__':
 	alldays = DayLocator()              # minor ticks on the days
 	weekFormatter = DateFormatter('%b %d')  # e.g., Jan 12
 	dayFormatter = DateFormatter('%d')      # e.g., 12
+
+	#ax.xaxis.set_minor_formatter(dayFormatter)
 
 	# select desired range of dates
 	#quotes = quotes[(quotes.index >= date1) & (quotes.index <= date2)]
@@ -207,7 +209,7 @@ if __name__=='__main__':
 	#display the one last software close 
 	get_data_and_display(stock_code)
 
-	plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
+	plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
 
 	plt.show()      
 
